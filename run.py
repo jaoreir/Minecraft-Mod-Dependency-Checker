@@ -43,6 +43,10 @@ def list_dependencies(mods_folder):
                                     if dep not in ("forge", "minecraft")
                                 ]
 
+    return mods_info
+
+
+def print_table(mods_info):
     table = pt.PrettyTable()
     table.field_names = ["MOD NAME", "DEPENDENCIES"]
     table.hrules = pt.HRuleStyle.ALL
@@ -72,7 +76,8 @@ def main():
         print("Path not provided!", file=sys.stderr)
         exit(1)
     mods_folder_path = sys.argv[1].strip()
-    list_dependencies(mods_folder_path)
+    mods_info = list_dependencies(mods_folder_path)
+    print_table(mods_info)
 
 
 if __name__ == "__main__":
