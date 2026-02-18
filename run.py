@@ -5,6 +5,8 @@ import zipfile
 import json
 import prettytable as pt
 import tomllib
+from rich import print as rprint
+from rich.tree import Tree
 
 
 def list_dependencies(mods_folder):
@@ -29,7 +31,7 @@ def list_dependencies(mods_folder):
                                         dep["modId"]
                                         for dep in dependencies
                                         if dep["modId"] not in ("forge", "minecraft")
-                                        and dep.get("mandatory", False)
+                                        # and dep.get("mandatory", False)
                                     ]
                     elif name.endswith("fabric.mod.json"):
                         with jar_file.open(name) as json_file:
@@ -63,6 +65,45 @@ def print_table(mods_info):
     print(table)
 
 
+def build_tree(node, deps, tree, seen):
+    if node in seen:
+        tree.add(f"{node} (already shown)")
+        return
+
+    seen.add(node)
+
+    for dep in deps.get(node, []):
+        branch = tree.add(dep)
+        build_tree(dep, deps, branch, seen)
+
+
+def find_unreferenced_nodes(deps):
+    depended_on = set()
+
+    for dependencies in deps.values():
+        depended_on.update(dependencies)
+
+    return set(deps) - depended_on
+
+
+def print_tree(mods_info):
+    dep_dict = {}
+    for mod, deps in mods_info.items():
+        if deps:
+            dep_dict[mod] = list(deps)
+        else:
+            dep_dict[mod] = list()
+    # rprint(dep_dict)
+
+    for node in dep_dict.keys():
+        tree = Tree(node)
+        build_tree(node, dep_dict, tree, set())
+        rprint(tree)
+
+    print("Mods with no dependents:")
+    rprint(sorted(list(find_unreferenced_nodes(dep_dict))))
+
+
 def main():
     # Ask for the mod folder path
     print("""Minecraft Mod Dependency Checker V1.0.0
@@ -77,7 +118,8 @@ def main():
         exit(1)
     mods_folder_path = sys.argv[1].strip()
     mods_info = list_dependencies(mods_folder_path)
-    print_table(mods_info)
+    # print_table(mods_info)
+    print_tree(mods_info)
 
 
 if __name__ == "__main__":
