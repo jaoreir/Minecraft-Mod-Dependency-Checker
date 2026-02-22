@@ -19,20 +19,25 @@ def list_dependencies(mods_folder):
                 for name in jar_file.namelist():
                     if name.endswith("mods.toml"):
                         with jar_file.open(name) as toml_file:
-                            content = toml_file.read().decode("utf-8")
-                            data = tomllib.loads(content)
-                            if "mods" in data and data["mods"]:
-                                mod_id = data["mods"][0].get("modId", "unknown")
-                                if mod_id != "unknown":
-                                    dependencies = data.get("dependencies", {}).get(
-                                        mod_id, []
-                                    )
-                                    mods_info[mod_id] = [
-                                        dep["modId"]
-                                        for dep in dependencies
-                                        if dep["modId"] not in ("forge", "minecraft")
-                                        # and dep.get("mandatory", False)
-                                    ]
+                            try:
+                                content = toml_file.read().decode("utf-8")
+                                data = tomllib.loads(content)
+                                if "mods" in data and data["mods"]:
+                                    mod_id = data["mods"][0].get("modId", "unknown")
+                                    if mod_id != "unknown":
+                                        dependencies = data.get("dependencies", {}).get(
+                                            mod_id, []
+                                        )
+                                        mods_info[mod_id] = [
+                                            dep["modId"]
+                                            for dep in dependencies
+                                            if dep["modId"] not in ("forge", "minecraft")
+                                            # and dep.get("mandatory", False)
+                                        ]
+                            except tomllib.TOMLDecodeError as er:
+                                print(f"Error parsing {file_name}")
+                                print(er)
+                                continue
                     elif name.endswith("fabric.mod.json"):
                         with jar_file.open(name) as json_file:
                             data = json.load(json_file)
