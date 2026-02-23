@@ -97,7 +97,7 @@ def find_unreferenced_nodes(deps):
     return set(deps) - depended_on
 
 
-def print_tree(mods_info):
+def build_dep_dict(mods_info):
     dep_dict = {}
     for mod, deps in mods_info.items():
         if deps:
@@ -105,18 +105,17 @@ def print_tree(mods_info):
         else:
             dep_dict[mod] = list()
     # rprint(dep_dict)
+    return dep_dict
 
+
+def print_tree(mods_info, dep_dict):
     for node in dep_dict.keys():
         tree = Tree(node)
         build_tree(node, dep_dict, tree, set())
-        # rprint(tree)
-
-    print("Mods with no dependents:")
-    rprint(sorted(list(find_unreferenced_nodes(dep_dict))))
+        rprint(tree)
 
 
 def main():
-    # Ask for the mod folder path
     print("""Minecraft Mod Dependency Checker V1.0.0
     By Steven Wheeler (https://github.com/stevenjwheeler/Minecraft-Mod-Dependency-Checker/)
 
@@ -124,13 +123,22 @@ def main():
     This helps to determine what libraries your mods in your installation or modpack require to function. 
     (For example, I created this tool to figure out what libraries I no longer needed after removing some mods from my modpack.)
     """)
+
     if len(sys.argv) < 2:
         print("Path not provided!", file=sys.stderr)
+        print("Usage: python run.py <path_to_mods_folder>", file=sys.stderr)
         exit(1)
+
     mods_folder_path = sys.argv[1].strip()
     mods_info = parse_mods_info(mods_folder_path)
+    dep_dict = build_dep_dict(mods_info)
     # print_table(mods_info)
-    print_tree(mods_info)
+    # print_tree(mods_info, dep_dict)
+
+    print("Mods with no dependents:")
+    rprint(sorted(list(find_unreferenced_nodes(dep_dict))))
+    print("You can safely remove mods from the list above without breaking other mods")
+    print("If a mod listed above is a library mod, it should be fine to remove")
 
 
 if __name__ == "__main__":
