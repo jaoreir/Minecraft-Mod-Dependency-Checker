@@ -137,16 +137,18 @@ def print_dependencies(dep_dict, mod_id):
 
 def main():
     print("""Minecraft Mod Dependency Checker V1.0.0
-    By Steven Wheeler (https://github.com/stevenjwheeler/Minecraft-Mod-Dependency-Checker/)
+By Steven Wheeler (https://github.com/stevenjwheeler/Minecraft-Mod-Dependency-Checker/)
+Modified by burnt.ear (https://github.com/jaoreir/Minecraft-Mod-Dependency-Checker/)
 
-    This tool reads the manifests in your mod folders .jar files and extracts information about the mandatory dependencies that each mod requires. 
-    This helps to determine what libraries your mods in your installation or modpack require to function. 
-    (For example, I created this tool to figure out what libraries I no longer needed after removing some mods from my modpack.)
+This tool reads the manifests in your mod folders .jar files and extracts information about the mandatory dependencies that each mod requires. 
+This helps to determine what libraries your mods in your installation or modpack require to function. 
+(For example, I created this tool to figure out what libraries I no longer needed after removing some mods from my modpack.)
+
+Usage: python run.py <path_to_mods_folder>
     """)
 
     if len(sys.argv) < 2:
         print("Path not provided!", file=sys.stderr)
-        print("Usage: python run.py <path_to_mods_folder>", file=sys.stderr)
         exit(1)
 
     mods_folder_path = sys.argv[1].strip()

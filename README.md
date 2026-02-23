@@ -1,32 +1,41 @@
 # Minecraft Mod Dependency Checker
 
-## Version: 1.0.0
+## Version: 1.1.0
 
 ### Description
+
 This tool reads the manifests in your mod folders .jar files and extracts information about the mandatory dependencies that each mod requires.
 This helps to determine what libraries your mods in your installation or modpack require to function.
 (For example, I created this tool to figure out what libraries I no longer needed after removing some mods from my modpack.)
 
 ### Prerequisites
+
 - Python 3.x
-- Required Python modules: `toml`, `prettytable`
+- Required Python modules: `rich`, `prettytable`
 
 ### Installation
+
 1. Download and install Python from [python.org](https://www.python.org/).
-2. Install the required Python modules:
+2. Clone this project to your machine
+3. (Recommended) Make a venv
    ```sh
-   pip install toml prettytable
+   python -m venv .venv
+   source .venv/bin/activate # for UNIX systems
+   ```
+4. Install the required Python modules:
+   ```sh
+   pip install -r requirements.txt
+   ```
 
 ### Usage
-1. Open a terminal or command prompt.
-2. Navigate to the directory where list_dependencies.py is located.
-3. Run the script:
-	```sh
-	python run.py
-4. When prompted, enter the path to your mod folder.
 
-### Output
-The script will display a table with the mods and their mandatory dependencies.
+1. Find the path of the folder containing all your mods
+2. Run the script:
+   ```sh
+   python run.py "<path_to_mod_folder>"
+   ```
+3. Respond to the prompts from the program to get information about the mods
 
 ### License
+
 This project is licensed under the MIT License.
