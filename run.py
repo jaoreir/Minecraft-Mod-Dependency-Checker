@@ -31,12 +31,13 @@ def list_dependencies(mods_folder):
                                         mods_info[mod_id] = [
                                             dep["modId"]
                                             for dep in dependencies
-                                            if dep["modId"] not in ("forge", "minecraft")
+                                            if dep["modId"]
+                                            not in ("forge", "minecraft")
                                             # and dep.get("mandatory", False)
                                         ]
                             except tomllib.TOMLDecodeError as er:
-                                print(f"Error parsing {file_name}")
-                                print(er)
+                                print(f"Error parsing {file_name}", file=sys.stderr)
+                                print(er, file=sys.stderr)
                                 continue
                     elif name.endswith("fabric.mod.json"):
                         with jar_file.open(name) as json_file:
@@ -103,7 +104,7 @@ def print_tree(mods_info):
     for node in dep_dict.keys():
         tree = Tree(node)
         build_tree(node, dep_dict, tree, set())
-        rprint(tree)
+        # rprint(tree)
 
     print("Mods with no dependents:")
     rprint(sorted(list(find_unreferenced_nodes(dep_dict))))
