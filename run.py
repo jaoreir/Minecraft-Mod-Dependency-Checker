@@ -78,7 +78,7 @@ def print_table(mods_info):
 
 def build_tree(node, deps, tree, seen):
     if node in seen:
-        tree.add(f"{node} (already shown)")
+        # tree.add(f"{node} (already shown)")
         return
 
     seen.add(node)
@@ -115,6 +115,26 @@ def print_tree(mods_info, dep_dict):
         rprint(tree)
 
 
+def print_no_dependents(dep_dict):
+    print("Mods with no dependents:")
+    rprint(sorted(list(find_unreferenced_nodes(dep_dict))))
+    print("You can safely remove mods from the list above without breaking other mods")
+    print("If a mod listed above is a library mod, it should be fine to remove")
+
+
+def print_dependents(dep_dict, mod_id):
+    dependents = []
+    for key, value in dep_dict.items():
+        if mod_id in value:
+            dependents.append(key)
+
+    rprint(dependents)
+
+
+def print_dependencies(dep_dict, mod_id):
+    rprint(dep_dict[mod_id])
+
+
 def main():
     print("""Minecraft Mod Dependency Checker V1.0.0
     By Steven Wheeler (https://github.com/stevenjwheeler/Minecraft-Mod-Dependency-Checker/)
@@ -132,13 +152,32 @@ def main():
     mods_folder_path = sys.argv[1].strip()
     mods_info = parse_mods_info(mods_folder_path)
     dep_dict = build_dep_dict(mods_info)
-    # print_table(mods_info)
-    # print_tree(mods_info, dep_dict)
+    print("mod info parsed")
 
-    print("Mods with no dependents:")
-    rprint(sorted(list(find_unreferenced_nodes(dep_dict))))
-    print("You can safely remove mods from the list above without breaking other mods")
-    print("If a mod listed above is a library mod, it should be fine to remove")
+    while True:
+        print("======================================")
+        print("What do you want to do?")
+        print("1) List mods with no dependents")
+        print("2) Show info about a mod")
+        print("3) Print table of info for all mods")
+        print("q) Quit")
+        v = input("Enter command: ")
+        if v == "q":
+            print("bye")
+            break
+        elif v == "1":
+            print_no_dependents(dep_dict)
+        elif v == "2":
+            mod_id = input("Input mod id: ")
+            print("Dependencies:")
+            # print_dependencies(dep_dict, mod_id)
+            tree = Tree(mod_id)
+            build_tree(mod_id, dep_dict, tree, set())
+            rprint(tree)
+            print("Dependents:")
+            print_dependents(dep_dict, mod_id)
+        elif v == "3":
+            print_table(mods_info)
 
 
 if __name__ == "__main__":
