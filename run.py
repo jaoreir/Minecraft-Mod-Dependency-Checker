@@ -8,6 +8,8 @@ import tomllib
 from rich import print as rprint
 from rich.tree import Tree
 
+import modrinth
+
 
 def parse_toml(mods_info, file_name, jar_file, inner_file_name):
     with jar_file.open(inner_file_name) as toml_file:
@@ -115,6 +117,21 @@ def print_tree(mods_info, dep_dict):
         rprint(tree)
 
 
+def search_no_deps_lib_mods(dep_dict):
+    unref_mods = list(find_unreferenced_nodes(dep_dict))
+    print(f"There are {len(unref_mods)} mods that are unreferenced.")
+    print("Fetching info from modrinth......")
+    mod_info = modrinth.fetch_mod_list_info(unref_mods)
+    print("Info fetching complete")
+    result = []
+    for key, value in mod_info.items():
+        categories = value["categories"]
+        if "library" in categories:
+            result.append(key)
+    print(f"There are {len(result)} library mods that have no dependents")
+    rprint(result)
+
+
 def print_no_dependents(dep_dict):
     print("Mods with no dependents:")
     rprint(sorted(list(find_unreferenced_nodes(dep_dict))))
@@ -159,6 +176,7 @@ Usage: python run.py <path_to_mods_folder>
     while True:
         print("======================================")
         print("What do you want to do?")
+        print("0) Search for library mods without dependents")
         print("1) List mods with no dependents")
         print("2) Show info about a mod")
         print("3) Print table of info for all mods")
@@ -167,6 +185,8 @@ Usage: python run.py <path_to_mods_folder>
         if v == "q":
             print("bye")
             break
+        elif v == "0":
+            search_no_deps_lib_mods(dep_dict)
         elif v == "1":
             print_no_dependents(dep_dict)
         elif v == "2":
