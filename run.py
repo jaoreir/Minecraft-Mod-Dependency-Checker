@@ -1,10 +1,10 @@
+import json
 import os
 import sys
+import tomllib
 import zipfile
 
-import json
 import prettytable as pt
-import tomllib
 from rich import print as rprint
 from rich.tree import Tree
 
@@ -16,16 +16,46 @@ def parse_toml(mods_info, file_name, jar_file, inner_file_name):
         try:
             content = toml_file.read().decode("utf-8")
             data = tomllib.loads(content)
-            if "mods" in data and data["mods"]:
-                mod_id = data["mods"][0].get("modId", "unknown")
-                if mod_id != "unknown":
-                    dependencies = data.get("dependencies", {}).get(mod_id, [])
-                    mods_info[mod_id] = [
-                        dep["modId"]
-                        for dep in dependencies
-                        if dep["modId"] not in ("forge", "minecraft")
-                        # and dep.get("mandatory", False)
-                    ]
+            if "mods" not in data or not data["mods"]:
+                return
+
+            # Get the mod id (for java)
+            mod_id = data["mods"][0].get("modId", None)
+            if not mod_id:
+                return
+            # Assume webid is the same at first
+            mods_info[mod_id] = {"mod_id": mod_id, "web_id": mod_id}
+
+            # Get mod dependencies
+            dependencies = data.get("dependencies", {}).get(mod_id, [])
+            mods_info[mod_id]["dependencies"] = [
+                dep["modId"]
+                for dep in dependencies
+                if dep["modId"] not in ("forge", "minecraft")
+                # and dep.get("mandatory", False)
+            ]
+
+            # Some mods have different mod ids for Java (in game) and for web API (modrinth/curseforge)
+            # Try parsing the display url for the mod id for the web API
+            # For some mods this will not exist and it's okay. We'll just use the java mod id for the web api mod id.
+            displayURL = data["mods"][0].get("displayURL", None)
+            if not displayURL:
+                return
+
+            def parse_web_id(prefix, url):
+                return url[len(prefix) :].split("/")[0]
+
+            MODRINTH_PREFIX = "https://modrinth.com/mod/"
+            if displayURL.startswith(MODRINTH_PREFIX):
+                mods_info[mod_id]["web_id"] = parse_web_id(MODRINTH_PREFIX, displayURL)
+                return
+            CURSEFORGE_PREFIX = "https://www.curseforge.com/minecraft/mc-mods/"
+            if displayURL.startswith(CURSEFORGE_PREFIX):
+                mods_info[mod_id]["web_id"] = parse_web_id(
+                    CURSEFORGE_PREFIX, displayURL
+                )
+                return
+
         except tomllib.TOMLDecodeError as er:
             print(er, file=sys.stderr)
             print(f"Error parsing {file_name}", file=sys.stderr)
@@ -39,7 +69,8 @@ def parse_json(mods_info, file_name, jar_file, inner_file_name):
         mod_id = data.get("id", "unknown")
         if mod_id != "unknown":
             dependencies = data.get("depends", {})
-            mods_info[mod_id] = [
+            mods_info[mod_id] = {"mod_id": mod_id, "web_id": mod_id}
+            mods_info[mod_id]["dependencies"] = [
                 dep for dep in dependencies.keys() if dep not in ("forge", "minecraft")
             ]
 
@@ -63,15 +94,17 @@ def parse_mods_info(mods_folder):
 
 def print_table(mods_info):
     table = pt.PrettyTable()
-    table.field_names = ["MOD NAME", "DEPENDENCIES"]
+    table.field_names = ["MOD NAME", "WEB MOD ID", "DEPENDENCIES"]
     table.hrules = pt.HRuleStyle.ALL
 
-    for mod, deps in mods_info.items():
+    for mod, info in mods_info.items():
+        deps = info["dependencies"]
+        web_id = info["web_id"]
         if deps:
             dep_list = ", ".join(deps)
         else:
             dep_list = "No mandatory dependencies found."
-        table.add_row([mod, dep_list])
+        table.add_row([mod, web_id, dep_list])
 
     table.align = "l"
 
@@ -101,7 +134,8 @@ def find_unreferenced_nodes(deps):
 
 def build_dep_dict(mods_info):
     dep_dict = {}
-    for mod, deps in mods_info.items():
+    for mod, info in mods_info.items():
+        deps = info["dependencies"]
         if deps:
             dep_dict[mod] = list(deps)
         else:
